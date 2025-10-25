@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Business Analyzer</title>
+  <link rel="stylesheet" href="/static/style.css?v=3.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Business Analyzer</h1>
+      <nav style="margin: 10px 0;">
+        <a href="/about" style="color: #2563eb; text-decoration: none; margin-right: 20px;">About</a>
+        <a href="/api/docs" style="color: #2563eb; text-decoration: none;" target="_blank">API Docs</a>
+      </nav>
+      <p>Enter a website URL or a short business description. We'll scrape content and generate insights using AI.</p>
+    </header>
+
+    <section class="card">
+      <form method="post" action="/analyze">
+        <label for="url">Website URL</label>
+        <input id="url" name="url" type="url" placeholder="https://example.com" />
+
+        <div class="sep">or</div>
+
+        <label for="description">Business description</label>
+        <textarea id="description" name="description" rows="4" placeholder="E.g., Healthcare staffing firm in Minnesota focusing on LTC facilities"></textarea>
+
+        <button type="submit">Analyze</button>
+      </form>
+    </section>
+
+    {% if error %}
+    <section class="card error">
+      <strong>Error:</strong> {{ error }}
+    </section>
+    {% endif %}
+
+    {% if result %}
+    <!-- Overall Business Score -->
+    <section class="card">
+      <h2>Business Analysis Summary</h2>
+      <div class="score-container">
+        <div class="score-circle">
+          <span class="score-number">{{ result.overall_business_score or 'N/A' }}</span>
+          <span class="score-label">Overall Score</span>
+        </div>
+        <div class="score-details">
+          <p><strong>Growth Readiness:</strong> {{ result.readiness_for_growth or 'N/A' }}</p>
+          <p>{{ result.report_text or 'Generated insights below.' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Business Info -->
+    <section class="card">
+      <h2>Business Overview</h2>
+      <div class="grid">
+        <div>
+          <h3>Industry</h3>
+          <div class="pill">{{ result.industry or 'N/A' }}</div>
+
+          <h3>Target Audience</h3>
+          <div class="pill">{{ result.target_audience or 'N/A' }}</div>
+
+          <h3>Website Strength</h3>
+          <p>{{ result.website_strength or 'N/A' }}</p>
+        </div>
+        <div>
+          <h3>Key Products/Services</h3>
+          {% if result.key_products and result.key_products|length > 0 %}
+            <ul>
+              {% for p in result.key_products %}
+              <li>{{ p }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>Growth Opportunities</h3>
+          {% if result.growth_opportunities and result.growth_opportunities|length > 0 %}
+            <ul>
+              {% for p in result.growth_opportunities %}
+              <li>{{ p }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Business Insights -->
+    {% if result.business_insights %}
+    <section class="card">
+      <h2>Strategic Business Insights</h2>
+      <div class="grid">
+        <div>
+          <h3>Market Positioning</h3>
+          <p>{{ result.business_insights.market_positioning or 'N/A' }}</p>
+          
+          <h3>Revenue Streams</h3>
+          {% if result.business_insights.revenue_streams %}
+            <ul>
+              {% for stream in result.business_insights.revenue_streams %}
+              <li>{{ stream }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>Competitive Advantages</h3>
+          {% if result.business_insights.competitive_advantages %}
+            <ul>
+              {% for advantage in result.business_insights.competitive_advantages %}
+              <li>{{ advantage }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>Digital Maturity Score</h3>
+          <div class="score-badge">{{ result.business_insights.digital_maturity_score or 'N/A' }}/10</div>
+          
+          <h3>Customer Acquisition Channels</h3>
+          {% if result.business_insights.customer_acquisition_channels %}
+            <ul>
+              {% for channel in result.business_insights.customer_acquisition_channels %}
+              <li>{{ channel }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>Risk Factors</h3>
+          {% if result.business_insights.risk_factors %}
+            <ul>
+              {% for risk in result.business_insights.risk_factors %}
+              <li>{{ risk }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Marketing Analytics -->
+    {% if result.marketing_analytics %}
+    <section class="card">
+      <h2>Marketing & Customer Analytics</h2>
+      <div class="grid">
+        <div>
+          <h3>Performance Scores</h3>
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="metric-label">Brand Presence</span>
+              <span class="metric-value">{{ result.marketing_analytics.brand_presence_score or 'N/A' }}/10</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Content Quality</span>
+              <span class="metric-value">{{ result.marketing_analytics.content_quality_score or 'N/A' }}/10</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">User Experience</span>
+              <span class="metric-value">{{ result.marketing_analytics.user_experience_score or 'N/A' }}/10</span>
+            </div>
+          </div>
+
+          <h3>Social Proof Indicators</h3>
+          {% if result.marketing_analytics.social_proof_indicators %}
+            <ul>
+              {% for indicator in result.marketing_analytics.social_proof_indicators %}
+              <li>{{ indicator }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>Target Demographics</h3>
+          <p>{{ result.marketing_analytics.target_demographics or 'N/A' }}</p>
+
+          <h3>Conversion Optimization Tips</h3>
+          {% if result.marketing_analytics.conversion_optimization_tips %}
+            <ul>
+              {% for tip in result.marketing_analytics.conversion_optimization_tips %}
+              <li>{{ tip }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Strategic Recommendations -->
+    <section class="card">
+      <h2>Strategic Recommendations</h2>
+      <div class="grid">
+        <div>
+          <h3>🎯 Strategic Priorities</h3>
+          {% if result.strategic_priorities %}
+            <ul>
+              {% for priority in result.strategic_priorities %}
+              <li>{{ priority }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>⚡ Quick Wins</h3>
+          {% if result.quick_wins %}
+            <ul>
+              {% for win in result.quick_wins %}
+              <li>{{ win }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>🚀 Long-term Goals</h3>
+          {% if result.long_term_goals %}
+            <ul>
+              {% for goal in result.long_term_goals %}
+              <li>{{ goal }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>💰 Investment Recommendations</h3>
+          {% if result.investment_recommendations %}
+            <ul>
+              {% for investment in result.investment_recommendations %}
+              <li>{{ investment }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Analytics -->
+    {% if result.technical_analytics %}
+    <section class="card">
+      <h2>Technical Performance Analytics</h2>
+      <div class="grid">
+        <div>
+          <h3>Website Performance Score</h3>
+          <div class="score-badge">{{ result.technical_analytics.website_performance_score or 'N/A' }}/10</div>
+          
+          <h3>Mobile Optimization</h3>
+          <p>{{ result.technical_analytics.mobile_optimization or 'N/A' }}</p>
+
+          <h3>Security Indicators</h3>
+          {% if result.technical_analytics.security_indicators %}
+            <ul>
+              {% for indicator in result.technical_analytics.security_indicators %}
+              <li>{{ indicator }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3>Integration Opportunities</h3>
+          {% if result.technical_analytics.integration_opportunities %}
+            <ul>
+              {% for opportunity in result.technical_analytics.integration_opportunities %}
+              <li>{{ opportunity }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+
+          <h3>Digital Transformation Needs</h3>
+          {% if result.digital_transformation_needs %}
+            <ul>
+              {% for need in result.digital_transformation_needs %}
+              <li>{{ need }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>N/A</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Analytics Dashboard -->
+    <section class="card">
+      <h2>📊 Business Analytics Dashboard</h2>
+      <div class="grid">
+        <div>
+          <h3>SEO & Digital Presence</h3>
+          <p><strong>SEO:</strong> {{ result.seo_summary or 'N/A' }}</p>
+          <p><strong>Sentiment:</strong> {{ result.sentiment_summary or 'N/A' }}</p>
+        </div>
+        <div>
+          <h3>Key Metrics Overview</h3>
+          <canvas id="metricsChart" style="max-height:250px"></canvas>
+        </div>
+      </div>
+      
+      <h3>Business Performance Radar</h3>
+      <canvas id="radarChart" style="max-height:400px"></canvas>
+    </section>
+
+    <script>
+      // Business Metrics Chart
+      const products = {{ (result.key_products|length if result.key_products else 0) | tojson }};
+      const opportunities = {{ (result.growth_opportunities|length if result.growth_opportunities else 0) | tojson }};
+      const priorities = {{ (result.strategic_priorities|length if result.strategic_priorities else 0) | tojson }};
+      const quickWins = {{ (result.quick_wins|length if result.quick_wins else 0) | tojson }};
+      
+      const metricsCtx = document.getElementById('metricsChart');
+      if (metricsCtx) {
+        new Chart(metricsCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Products/Services', 'Growth Opportunities', 'Strategic Priorities', 'Quick Wins'],
+            datasets: [{
+              data: [products, opportunities, priorities, quickWins],
+              backgroundColor: ['#2563eb', '#16a34a', '#f59e0b', '#8b5cf6'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            }
+          }
+        });
+      }
+
+      // Performance Radar Chart
+      const digitalScore = {{ (result.business_insights.digital_maturity_score if result.business_insights else 5) | tojson }};
+      const brandScore = {{ (result.marketing_analytics.brand_presence_score if result.marketing_analytics else 5) | tojson }};
+      const contentScore = {{ (result.marketing_analytics.content_quality_score if result.marketing_analytics else 5) | tojson }};
+      const uxScore = {{ (result.marketing_analytics.user_experience_score if result.marketing_analytics else 5) | tojson }};
+      const techScore = {{ (result.technical_analytics.website_performance_score if result.technical_analytics else 5) | tojson }};
+      
+      const radarCtx = document.getElementById('radarChart');
+      if (radarCtx) {
+        new Chart(radarCtx, {
+          type: 'radar',
+          data: {
+            labels: ['Digital Maturity', 'Brand Presence', 'Content Quality', 'User Experience', 'Technical Performance'],
+            datasets: [{
+              label: 'Business Performance',
+              data: [digitalScore, brandScore, contentScore, uxScore, techScore],
+              backgroundColor: 'rgba(37, 99, 235, 0.2)',
+              borderColor: 'rgba(37, 99, 235, 1)',
+              borderWidth: 2,
+              pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 10,
+                grid: { color: '#e2e8f0' },
+                angleLines: { color: '#e2e8f0' },
+                pointLabels: { font: { size: 12 } }
+              }
+            },
+            plugins: {
+              legend: { position: 'top' }
+            }
+          }
+        });
+      }
+    </script>
+    {% endif %}
+
+    <footer>
+      <p class="muted">
+        💡 <strong>Analysis Modes:</strong> 
+        This app uses OpenAI API (if configured), Ollama (if available), or advanced heuristic analysis as fallback. 
+        All modes provide comprehensive business insights! 
+        <br><br>
+        🚀 <strong>Tip:</strong> Works perfectly in cloud deployment without any AI dependencies.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
